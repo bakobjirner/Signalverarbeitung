@@ -1,6 +1,7 @@
 from os import path as osp
 import numpy as np
 from utils import ideal_bandpass, from_wav, to_wav, plot_freq, plot_am_freq, check_arrays
+from exercise_03 import hilbert_trafo
 
 # Your solution starts here.
 def frequency_demodulation(high_freq_signal, rate, carrier_freq, bandwidth, freq_delta):   
@@ -18,8 +19,25 @@ def frequency_demodulation(high_freq_signal, rate, carrier_freq, bandwidth, freq
         ndarray: The demodulated low-frequency signal.
 
     """
+
+    #create cosine wave of the carrier frequency
+    t = np.arange(len(high_freq_signal))/rate
+    cosine_wave = np.cos(2 * np.pi * carrier_freq * t)
+    sine_wave = np.sin(2 * np.pi * carrier_freq * t)
+
+    i = high_freq_signal * cosine_wave
+    q = high_freq_signal * sine_wave
+
+    i_filtered = ideal_bandpass(i,rate,None,bandwidth/2)
+    q_filtered = ideal_bandpass(q,rate,None,bandwidth/2)
+
     
-    return np.zeros_like(high_freq_signal) # TODO: 4a
+    angle = np.arctan2(q,i)
+    derivation = np.diff(angle)
+
+
+
+    return derivation
     
 def frequency_modulation(low_freq_signal, rate, carrier_freq, bandwidth, freq_delta):
     """

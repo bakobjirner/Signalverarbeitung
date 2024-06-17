@@ -14,8 +14,21 @@ def hilbert_trafo(x_time):
         ndarray: The transformed input signal.
 
     """
+
+    #transfre to freq domain
+    x_freq = np.fft.fft(x_time)
+
+    #construct hilbert array
+    h = np.zeros_like(x_freq,dtype=complex)
+    n = x_freq.size
+    h[0:int(n/2)] = 0-1j
+    h[int(n/2):n] = 0+1j
+
+    #apply filter
+    x_hilbert = x_freq * h
     
-    return np.zeros_like(x_time) # TODO: 3a
+    
+    return np.fft.ifft(x_hilbert)
 
 def ssb_demodulation(high_freq_signal, rate, carrier_freq, bandwidth, upper_side_band=True):
     """
@@ -33,8 +46,14 @@ def ssb_demodulation(high_freq_signal, rate, carrier_freq, bandwidth, upper_side
         ndarray: The demodulated low-frequency signal.
 
     """
+
+    #create cosine wave of the carrier frequency
+    t = np.arange(len(high_freq_signal))/rate
+    cosine_wave = np.cos(2 * np.pi * carrier_freq * t)
+    mixed_signal = high_freq_signal * cosine_wave
+    hilbert = hilbert_trafo(mixed_signal)
     
-    return np.zeros_like(high_freq_signal) # TODO: 3b
+    return ideal_bandpass(hilbert,rate,None,bandwidth/2)
     
 def ssb_modulation(low_freq_signal, rate, carrier_freq, bandwidth, upper_side_band=True):
     """
@@ -52,7 +71,17 @@ def ssb_modulation(low_freq_signal, rate, carrier_freq, bandwidth, upper_side_ba
 
     """
     
-    return np.zeros_like(low_freq_signal) # TODO: 3c
+    #filter signal so it is within bandwidth
+    filtered_signal = ideal_bandpass(low_freq_signal, rate, max_freq=bandwidth/2)
+
+    #generate high frequency
+    t = np.arange(len(low_freq_signal)) / rate
+    carrier_signal = np.cos(2 * np.pi * carrier_freq * t)
+    hilbert = hilbert_trafo(filtered_signal)
+    
+    modulated_signal = (hilbert * (0+1j) + filtered_signal) * carrier_signal
+    
+    return modulated_signal
 # Your solution ends here.
 
 def main():
